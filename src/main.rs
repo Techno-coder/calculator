@@ -7,6 +7,7 @@ mod parse;
 mod node;
 mod interface;
 mod coalescence;
+mod context;
 
 fn main() {
 	println!("Hello, world!");
