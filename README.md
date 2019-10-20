@@ -1,5 +1,7 @@
 # calculator
 
+![](examples/example.gif)
+
 ```
 >> (10) - 2 + 4;
 [ 0] 4
