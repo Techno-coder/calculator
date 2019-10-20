@@ -14,6 +14,7 @@ fn parse(coalescence: Coalescence, operators: &mut Vec<Spanned<Operator>>,
          state: usize, nodes: &mut Vec<Node>) {
 	match coalescence {
 		Coalescence::Terminal(terminal) => nodes.push(Node::Terminal(terminal)),
+		Coalescence::Variable(variable) => nodes.push(Node::Variable(variable)),
 		Coalescence::Operator(operator) => {
 			while let Some(stack_operator) = operators.last() {
 				match stack_operator.node.precedence() > operator.node.precedence() {

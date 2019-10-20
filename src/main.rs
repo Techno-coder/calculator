@@ -10,7 +10,6 @@ mod coalescence;
 mod context;
 
 fn main() {
-	println!("Hello, world!");
 	if let Err(error) = interface::interface() {
 		eprintln!("Error: {}", error);
 	}

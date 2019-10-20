@@ -67,12 +67,13 @@ fn evaluate(context: &mut Context) -> Result {
 
 	let coalescence = coalescence.unwrap();
 	let node = crate::parse::parse_root(coalescence);
-	match node.evaluate() {
+	match node.evaluate(context) {
 		Err(error) => print!("{}{}{}", Colored::Fg(Color::Red),
 			error, Colored::Fg(Color::Reset)),
 		Ok(evaluation) => {
 			let index = context.push_value(evaluation);
-			print!("[{:2x}]: {}", index, evaluation);
+			print!("{}{:2x}{}: {}", "[".white().bold(), index,
+				"]".white().bold(), evaluation);
 		}
 	}
 

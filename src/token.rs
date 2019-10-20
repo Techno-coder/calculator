@@ -1,8 +1,7 @@
-use std::fmt;
-
 #[derive(Debug, PartialEq)]
 pub enum Token {
 	Terminal(f64),
+	Variable(String),
 	Operator(Operator),
 	ParenthesisOpen,
 	ParenthesisClose,
@@ -24,24 +23,16 @@ pub enum Operator {
 	Minus,
 	Multiply,
 	Divide,
+	Modulo,
+	Power,
 }
 
 impl Operator {
 	pub fn precedence(&self) -> usize {
 		match self {
 			Operator::Add | Operator::Minus => 0,
-			Operator::Multiply | Operator::Divide => 1,
+			Operator::Multiply | Operator::Divide | Operator::Modulo => 1,
+			Operator::Power => 2,
 		}
-	}
-}
-
-impl fmt::Display for Operator {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "{}", match self {
-			Operator::Add => "+",
-			Operator::Minus => "-",
-			Operator::Multiply => "*",
-			Operator::Divide => "/",
-		})
 	}
 }

@@ -2,9 +2,11 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum Error {
+	UndefinedVariable(String),
 	InvalidCharacter(char),
+	InvalidEvaluationOffset,
 	InvalidTerminal,
-	ExpectedTerminal,
+	ExpectedValued,
 	ExpectedOperator,
 	MismatchedBracket,
 	EmptyBrackets,
@@ -15,12 +17,16 @@ pub enum Error {
 impl fmt::Display for Error {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
+			Error::UndefinedVariable(variable) =>
+				write!(f, "Undefined variable: '{}'", variable),
 			Error::InvalidCharacter(character) =>
 				write!(f, "Invalid input character: '{}'", character),
+			Error::InvalidEvaluationOffset =>
+				write!(f, "Invalid evaluation offset"),
 			Error::InvalidTerminal =>
 				write!(f, "Invalid number"),
-			Error::ExpectedTerminal =>
-				write!(f, "Expected a number"),
+			Error::ExpectedValued =>
+				write!(f, "Expected a number or variable"),
 			Error::ExpectedOperator =>
 				write!(f, "Expected an operator"),
 			Error::MismatchedBracket =>

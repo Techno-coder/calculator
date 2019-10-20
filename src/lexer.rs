@@ -90,6 +90,17 @@ impl<'a> Lexer<'a> {
 		}
 		(self.byte_end, counter)
 	}
+
+	fn take_identifier(&mut self) -> usize {
+		while let Some((index, character)) = self.characters.peek() {
+			let invalid_character = character.is_whitespace() || character.is_ascii_punctuation();
+			match character != &'$' && invalid_character {
+				false => self.characters.next(),
+				true => return *index,
+			};
+		}
+		self.byte_end
+	}
 }
 
 impl<'a> Iterator for Lexer<'a> {
@@ -111,6 +122,10 @@ impl<'a> Iterator for Lexer<'a> {
 			let (byte_end, counter) = self.take_coalesce();
 			return Some(Ok(Spanned::new(Token::Coalesce(counter),
 				Span(byte_start, byte_end))));
+		} else if character == '$' {
+			let byte_end = self.take_identifier();
+			let token = Token::Variable(self.string[byte_start + 1..byte_end].to_owned());
+			return Some(Ok(Spanned::new(token, Span(byte_start, byte_end))));
 		}
 
 		let span = Span(byte_start, self.characters.peek()
@@ -122,6 +137,8 @@ impl<'a> Iterator for Lexer<'a> {
 			'-' => Token::Operator(Operator::Minus),
 			'*' => Token::Operator(Operator::Multiply),
 			'/' => Token::Operator(Operator::Divide),
+			'%' => Token::Operator(Operator::Modulo),
+			'^' => Token::Operator(Operator::Power),
 			_ => return Some(Err(Spanned::new(Error::InvalidCharacter(character), span))),
 		}, span);
 
@@ -155,5 +172,15 @@ mod tests {
 			Token::Operator(Operator::Add), Token::Terminal(-10.0), Token::Terminal(10.0),
 			Token::Terminal(10.0), Token::Terminal(10.0), Token::Operator(Operator::Add),
 			Token::Terminal(-10.0)]);
+	}
+
+	#[test]
+	fn test_identifier() {
+		let string = "$ $0 $$ $identifier";
+		let tokens: Result<Vec<_>, _> = Lexer::new(string)
+			.map(|token| token.map(|token| token.node)).collect();
+		assert_eq!(tokens.unwrap(), &[Token::Variable("".to_owned()),
+			Token::Variable("0".to_owned()), Token::Variable("$".to_owned()),
+			Token::Variable("identifier".to_owned())]);
 	}
 }

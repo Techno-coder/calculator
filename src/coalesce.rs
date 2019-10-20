@@ -8,7 +8,7 @@ pub fn coalesce_root(lexer: &mut Lexer) -> Result<Coalescence, Spanned<Error>> {
 	coalesce(lexer, false, false)
 }
 
-fn coalesce(lexer: &mut Lexer, mut last_terminal: bool, expect_parenthesis: bool)
+fn coalesce(lexer: &mut Lexer, mut last_valued: bool, expect_parenthesis: bool)
             -> Result<Coalescence, Spanned<Error>> {
 	let mut last_byte_end = 0;
 	let mut coalesces = Vec::new();
@@ -23,21 +23,28 @@ fn coalesce(lexer: &mut Lexer, mut last_terminal: bool, expect_parenthesis: bool
 			Token::ParenthesisClose => return Err(token.map(Error::MismatchedBracket)),
 			Token::ParenthesisOpen => {
 				coalesces.push(coalesce(lexer, false, true)?);
-				last_terminal = true;
+				last_valued = true;
 			}
-			Token::Operator(operator) => match last_terminal {
+			Token::Operator(operator) => match last_valued {
 				true => {
 					coalesces.push(Coalescence::Operator(token.map(operator)));
-					last_terminal = false;
+					last_valued = false;
 				}
-				false => return Err(token.map(Error::ExpectedTerminal)),
+				false => return Err(token.map(Error::ExpectedValued)),
 			},
-			Token::Terminal(terminal) => match last_terminal {
+			Token::Terminal(terminal) => match last_valued {
 				false => {
 					coalesces.push(Coalescence::Terminal(token.map(terminal)));
-					last_terminal = true;
+					last_valued = true;
 				}
 				true => return Err(token.map(Error::ExpectedOperator)),
+			},
+			Token::Variable(variable) => match last_valued {
+				false => {
+					coalesces.push(Coalescence::Variable(Spanned::new(variable, token.span)));
+					last_valued = true;
+				}
+				true => return Err(Spanned::new(Error::ExpectedOperator, token.span)),
 			},
 			Token::Coalesce(count) => {
 				let coalesce_length = 1 + count * 2;
@@ -53,8 +60,8 @@ fn coalesce(lexer: &mut Lexer, mut last_terminal: bool, expect_parenthesis: bool
 	}
 
 	let last_span = Span(last_byte_end, last_byte_end + 1);
-	match last_terminal {
+	match last_valued {
 		true => Ok(Coalescence::Multiple(coalesces)),
-		false => Err(Spanned::new(Error::ExpectedTerminal, last_span))
+		false => Err(Spanned::new(Error::ExpectedValued, last_span))
 	}
 }
