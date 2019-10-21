@@ -4,13 +4,18 @@
 
 ```
 >> (10) - 2 + 4;
-[ 0] 4
+[0] 4
 >> 2 * 0x03
-[ 1] 6
+[1] 6
 >> $ ^ $$
-[ 2] 1296
+[2] 1296
 >> $2 % 5
-[ 3] 1
+[3] 1
+```
+
+## Installation
+```
+cargo install --git https://github.com/Techno-coder/calculator
 ```
 
 ## Arithmetic Operators
@@ -39,8 +44,8 @@ In order of precedence:
 ## Coalescence
 * `;` - Coalesce operator
 
-The coalesce operator combines the previous two expressions into a single node.
-This eliminates the need for parenthesis.
+The coalesce operator combines the previous two terms into a single node.
+This eliminates the need for parentheses.
 
 ```
 >> 10 - 2 + 4;
@@ -50,7 +55,7 @@ is equivalent to:
 >> 10 - (2 + 4)
 ```
 
-Repetitions of the coalesce operator will combine more expressions:
+Repetitions of the coalesce operator will combine more than two terms:
 ```
 >> 1 / 1 + 2 + 3;;
 ```
@@ -58,7 +63,7 @@ is equivalent to:
 ```
 >> 1 / (1 + 2 + 3)
 ```
-Sometimes a combined expression is nested inside another:
+Sometimes a combined term is nested inside another:
 ```
 >> 1 / (2 - (3 + 4))
 ```

@@ -1,3 +1,5 @@
+use crate::context::Context;
+use crate::error::Error;
 use crate::span::Spanned;
 use crate::token::Operator;
 
@@ -10,6 +12,16 @@ pub enum Coalescence {
 }
 
 impl Coalescence {
+	pub fn verify(&self, context: &Context) -> Result<(), Spanned<Error>> {
+		match self {
+			Coalescence::Multiple(coalesces) => coalesces.iter()
+				.try_for_each(|coalesce| coalesce.verify(context)),
+			Coalescence::Variable(variable) => context.variable(&variable.node)
+				.map_err(|error| Spanned::new(error, variable.span)).map(|_| ()),
+			_ => Ok(()),
+		}
+	}
+
 	pub fn coalesce_anchors(&self) -> Vec<usize> {
 		match self {
 			Coalescence::Multiple(coalesces) => coalesces.iter().step_by(2)

@@ -20,8 +20,12 @@ pub fn line_error(error: &Spanned<Error>) -> Result {
 		Output(string), SetFg(Color::Reset), ResetPos)?)
 }
 
-pub fn line_break() -> Result {
-	clear_buffer()?;
+pub fn line_break(clear: bool) -> Result {
+	match clear {
+		true => clear_buffer(),
+		false => buffer_line(),
+	}?;
+
 	let (_, row) = crossterm::cursor().pos()?;
 	Ok(queue!(stdout(), Goto(0, row + 1))?)
 }

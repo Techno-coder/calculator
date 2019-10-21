@@ -1,9 +1,9 @@
 use crate::coalescence::Coalescence;
 use crate::node::Node;
-use crate::span::Spanned;
+use crate::span::{Span, Spanned};
 use crate::token::Operator;
 
-pub fn parse_root(coalescence: Coalescence) -> Node {
+pub fn parse_root(coalescence: Coalescence) -> Spanned<Node> {
 	let nodes = &mut Vec::new();
 	parse(coalescence, &mut Vec::new(), 0, nodes);
 	assert_eq!(nodes.len(), 1);
@@ -11,10 +11,12 @@ pub fn parse_root(coalescence: Coalescence) -> Node {
 }
 
 fn parse(coalescence: Coalescence, operators: &mut Vec<Spanned<Operator>>,
-         state: usize, nodes: &mut Vec<Node>) {
+         state: usize, nodes: &mut Vec<Spanned<Node>>) {
 	match coalescence {
-		Coalescence::Terminal(terminal) => nodes.push(Node::Terminal(terminal)),
-		Coalescence::Variable(variable) => nodes.push(Node::Variable(variable)),
+		Coalescence::Terminal(terminal) =>
+			nodes.push(Spanned::new(Node::Terminal(terminal.node), terminal.span)),
+		Coalescence::Variable(variable) =>
+			nodes.push(Spanned::new(Node::Variable(variable.node), variable.span)),
 		Coalescence::Operator(operator) => {
 			while let Some(stack_operator) = operators.last() {
 				match stack_operator.node.precedence() > operator.node.precedence() {
@@ -37,9 +39,12 @@ fn parse(coalescence: Coalescence, operators: &mut Vec<Spanned<Operator>>,
 	}
 }
 
-fn construct(operators: &mut Vec<Spanned<Operator>>, nodes: &mut Vec<Node>) {
+fn construct(operators: &mut Vec<Spanned<Operator>>, nodes: &mut Vec<Spanned<Node>>) {
 	let operator = operators.pop().unwrap();
 	let right = nodes.pop().unwrap_or_else(|| panic!("Node stack is empty"));
 	let left = nodes.pop().unwrap_or_else(|| panic!("Node stack is empty"));
-	nodes.push(Node::Operator(operator, Box::new(left), Box::new(right)));
+
+	let span = Span(left.span.byte_start(), right.span.byte_end());
+	let node = Node::Operator(operator, Box::new(left), Box::new(right));
+	nodes.push(Spanned::new(node, span));
 }

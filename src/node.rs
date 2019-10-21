@@ -5,19 +5,20 @@ use crate::token::Operator;
 
 #[derive(Debug)]
 pub enum Node {
-	Terminal(Spanned<f64>),
-	Variable(Spanned<String>),
-	Operator(Spanned<Operator>, Box<Node>, Box<Node>),
+	Terminal(f64),
+	Variable(String),
+	Operator(Spanned<Operator>, Box<Spanned<Node>>, Box<Spanned<Node>>),
 }
 
-impl Node {
-	pub fn evaluate(&self, context: &Context) -> Result<f64, Error> {
-		Ok(match self {
-			Node::Terminal(terminal) => terminal.node,
-			Node::Variable(variable) => context.variable(&variable.node)?,
-			Node::Operator(operator, left, right) => {
-				let left = left.evaluate(context)?;
-				let right = right.evaluate(context)?;
+impl Spanned<Node> {
+	pub fn evaluate(&self, context: &Context) -> Result<f64, Spanned<Error>> {
+		Ok(match &self.node {
+			Node::Terminal(terminal) => *terminal,
+			Node::Variable(variable) => context.variable(variable)
+				.map_err(|error| Spanned::new(error, self.span))?,
+			Node::Operator(operator, left_node, right_node) => {
+				let left = left_node.evaluate(context)?;
+				let right = right_node.evaluate(context)?;
 				match operator.node {
 					Operator::Add => left + right,
 					Operator::Minus => left - right,
@@ -26,7 +27,7 @@ impl Node {
 						if right != 0.0 {
 							left / right
 						} else {
-							return Err(Error::ZeroDivision);
+							return Err(Spanned::new(Error::ZeroDivision, right_node.span));
 						}
 					}
 					Operator::Modulo => left % right,

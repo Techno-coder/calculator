@@ -18,7 +18,7 @@ impl fmt::Display for Error {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
 			Error::UndefinedVariable(variable) =>
-				write!(f, "Undefined variable: '{}'", variable),
+				write!(f, "Undefined variable: {}", variable),
 			Error::InvalidCharacter(character) =>
 				write!(f, "Invalid input character: '{}'", character),
 			Error::InvalidEvaluationOffset =>
