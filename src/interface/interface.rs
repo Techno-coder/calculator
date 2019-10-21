@@ -19,13 +19,13 @@ pub fn interface() -> Result {
 			InputEvent::Keyboard(event) => match event {
 				KeyEvent::Enter => evaluate(context)?,
 				KeyEvent::Char(character) => {
-					queue!(stdout(), Output(character.to_string()))?;
+					execute!(stdout(), Output(character.to_string()))?;
 					context.expression.push(character);
 					check::check(context)?;
 				}
 				KeyEvent::Backspace => {
 					if context.expression.pop().is_some() {
-						queue!(stdout(), Left(1), Output(' '.to_string()), Left(1))?;
+						execute!(stdout(), Left(1), Output(' '.to_string()), Left(1))?;
 					}
 					check::check(context)?;
 				}
