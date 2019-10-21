@@ -15,7 +15,7 @@
 
 ## Installation
 ```
-cargo install --git https://github.com/Techno-coder/calculator
+cargo install --locked --git https://github.com/Techno-coder/calculator
 ```
 
 ## Arithmetic Operators
