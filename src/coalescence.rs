@@ -1,5 +1,6 @@
 use crate::context::Context;
 use crate::error::Error;
+use crate::item::Function;
 use crate::span::Spanned;
 use crate::token::Operator;
 
@@ -9,6 +10,7 @@ pub enum Coalescence {
 	Operator(Spanned<Operator>),
 	Terminal(Spanned<f64>),
 	Variable(Spanned<String>),
+	Function(Spanned<Function>),
 }
 
 impl Coalescence {
@@ -24,10 +26,20 @@ impl Coalescence {
 
 	pub fn coalesce_anchors(&self) -> Vec<usize> {
 		match self {
-			Coalescence::Multiple(coalesces) => coalesces.iter().step_by(2)
-				.map(|coalescence| coalescence.byte_start()).collect(),
+			Coalescence::Multiple(coalesces) => {
+				let mut anchors = Vec::new();
+				let mut coalesces = coalesces.iter();
+				while let Some(coalesce) = coalesces.next() {
+					match coalesce {
+						Coalescence::Operator(_) => continue,
+						_ => anchors.push(coalesce.byte_start()),
+					}
+				}
+				anchors
+			}
 			Coalescence::Terminal(_) => vec![self.byte_start()],
 			Coalescence::Variable(_) => vec![self.byte_start()],
+			Coalescence::Function(_) => vec![self.byte_start()],
 			Coalescence::Operator(_) => vec![],
 		}
 	}
@@ -38,6 +50,7 @@ impl Coalescence {
 			Coalescence::Operator(operator) => operator.span.byte_start(),
 			Coalescence::Terminal(terminal) => terminal.span.byte_start(),
 			Coalescence::Variable(variable) => variable.span.byte_start(),
+			Coalescence::Function(function) => function.span.byte_start(),
 		}
 	}
 
@@ -47,6 +60,7 @@ impl Coalescence {
 			Coalescence::Operator(operator) => operator.span.byte_end(),
 			Coalescence::Terminal(terminal) => terminal.span.byte_end(),
 			Coalescence::Variable(variable) => variable.span.byte_end(),
+			Coalescence::Function(function) => function.span.byte_end(),
 		}
 	}
 }

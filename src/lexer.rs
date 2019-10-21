@@ -2,6 +2,7 @@ use std::iter::Peekable;
 use std::str::CharIndices;
 
 use crate::error::Error;
+use crate::item::{Constant, Function};
 use crate::span::{Span, Spanned};
 use crate::token::{Operator, Token};
 
@@ -93,7 +94,8 @@ impl<'a> Lexer<'a> {
 
 	fn take_identifier(&mut self) -> usize {
 		while let Some((index, character)) = self.characters.peek() {
-			let invalid_character = character.is_whitespace() || character.is_ascii_punctuation();
+			let invalid_character = character.is_whitespace() ||
+				character.is_ascii_punctuation();
 			match character != &'$' && invalid_character {
 				false => self.characters.next(),
 				true => return *index,
@@ -126,6 +128,23 @@ impl<'a> Iterator for Lexer<'a> {
 			let byte_end = self.take_identifier();
 			let token = Token::Variable(self.string[byte_start + 1..byte_end].to_owned());
 			return Some(Ok(Spanned::new(token, Span(byte_start, byte_end))));
+		}
+
+		if !character.is_ascii_punctuation() {
+			let byte_end = self.take_identifier();
+			let span = Span(byte_start, byte_end);
+			let token = Spanned::new(match &self.string[byte_start..byte_end] {
+				"sin" => Token::Function(Function::Sine),
+				"cos" => Token::Function(Function::Cosine),
+				"tan" => Token::Function(Function::Tangent),
+				"asin" => Token::Function(Function::InverseSine),
+				"acos" => Token::Function(Function::InverseCosine),
+				"atan" => Token::Function(Function::InverseTangent),
+				"e" => Token::Constant(Constant::E),
+				"pi" => Token::Constant(Constant::Pi),
+				_ => return Some(Err(Spanned::new(Error::InvalidItem, span))),
+			}, span);
+			return Some(Ok(token));
 		}
 
 		let span = Span(byte_start, self.characters.peek()

@@ -6,6 +6,7 @@ pub enum Error {
 	InvalidCharacter(char),
 	InvalidEvaluationOffset,
 	InvalidTerminal,
+	InvalidItem,
 	ExpectedValued,
 	ExpectedOperator,
 	MismatchedBracket,
@@ -25,8 +26,10 @@ impl fmt::Display for Error {
 				write!(f, "Invalid evaluation offset"),
 			Error::InvalidTerminal =>
 				write!(f, "Invalid number"),
+			Error::InvalidItem =>
+				write!(f, "Invalid function or constant"),
 			Error::ExpectedValued =>
-				write!(f, "Expected a number or variable"),
+				write!(f, "Expected a number, variable or constant"),
 			Error::ExpectedOperator =>
 				write!(f, "Expected an operator"),
 			Error::MismatchedBracket =>

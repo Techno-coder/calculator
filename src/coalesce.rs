@@ -46,15 +46,37 @@ fn coalesce(lexer: &mut Lexer, mut last_valued: bool, expect_parenthesis: bool)
 				}
 				true => return Err(Spanned::new(Error::ExpectedOperator, token.span)),
 			},
-			Token::Coalesce(count) => {
-				let coalesce_length = 1 + count * 2;
-				if coalesce_length > coalesces.len() {
-					return Err(token.map(Error::InvalidCoalesce));
+			Token::Function(function) => match last_valued {
+				false => coalesces.push(Coalescence::Function(Spanned::new(function, token.span))),
+				true => return Err(Spanned::new(Error::ExpectedOperator, token.span)),
+			},
+			Token::Constant(constant) => match last_valued {
+				false => {
+					let terminal = Spanned::new(constant.value(), token.span);
+					coalesces.push(Coalescence::Terminal(terminal));
+					last_valued = true;
+				}
+				true => return Err(Spanned::new(Error::ExpectedOperator, token.span)),
+			},
+			Token::Coalesce(mut count) => {
+				count += 1;
+				let mut iterator = coalesces.iter().enumerate().rev();
+				while let Some((index, coalesce)) = iterator.next() {
+					match coalesce {
+						Coalescence::Operator(_) => continue,
+						_ => count -= 1,
+					}
+
+					if count == 0 {
+						let coalescence = coalesces.split_off(index);
+						coalesces.push(Coalescence::Multiple(coalescence));
+						break;
+					}
 				}
 
-				let coalesce_start = coalesces.len() - coalesce_length;
-				let coalescence = coalesces.split_off(coalesce_start);
-				coalesces.push(Coalescence::Multiple(coalescence));
+				if count > 0 {
+					return Err(token.map(Error::InvalidCoalesce));
+				}
 			}
 		}
 	}

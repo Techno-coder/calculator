@@ -41,6 +41,25 @@ In order of precedence:
 * `$0` - Variable with identifier `0`
 * `$aa` - Variable with identifier `aa`
 
+## Functions
+```
+>> function argument
+```
+Functions take the term immediately to the right. 
+Whitespace is required after the function name.
+
+### Trigonometry
+* `sin` - Sine
+* `cos` - Cosine
+* `tan` - Tangent
+* `asin` - Inverse sine
+* `acos` - Inverse cosine
+* `atan` - Inverse tangent
+
+## Constants
+* `e` - Euler number
+* `pi` - Pi (3.14)
+
 ## Coalescence
 * `;` - Coalesce operator
 

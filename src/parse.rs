@@ -1,7 +1,23 @@
 use crate::coalescence::Coalescence;
+use crate::item::Function;
 use crate::node::Node;
 use crate::span::{Span, Spanned};
 use crate::token::Operator;
+
+#[derive(Debug)]
+enum ParserOperator {
+	Operator(Spanned<Operator>),
+	Function(Spanned<Function>),
+}
+
+impl ParserOperator {
+	pub fn precedence(&self) -> usize {
+		match self {
+			ParserOperator::Operator(operator) => operator.node.precedence(),
+			ParserOperator::Function(_) => usize::max_value(),
+		}
+	}
+}
 
 pub fn parse_root(coalescence: Coalescence) -> Spanned<Node> {
 	let nodes = &mut Vec::new();
@@ -10,21 +26,23 @@ pub fn parse_root(coalescence: Coalescence) -> Spanned<Node> {
 	nodes.pop().unwrap()
 }
 
-fn parse(coalescence: Coalescence, operators: &mut Vec<Spanned<Operator>>,
+fn parse(coalescence: Coalescence, operators: &mut Vec<ParserOperator>,
          state: usize, nodes: &mut Vec<Spanned<Node>>) {
 	match coalescence {
 		Coalescence::Terminal(terminal) =>
 			nodes.push(Spanned::new(Node::Terminal(terminal.node), terminal.span)),
 		Coalescence::Variable(variable) =>
 			nodes.push(Spanned::new(Node::Variable(variable.node), variable.span)),
+		Coalescence::Function(function) =>
+			operators.push(ParserOperator::Function(function)),
 		Coalescence::Operator(operator) => {
 			while let Some(stack_operator) = operators.last() {
-				match stack_operator.node.precedence() > operator.node.precedence() {
+				match stack_operator.precedence() > operator.node.precedence() {
 					true if operators.len() > state => construct(operators, nodes),
 					_ => break,
 				}
 			}
-			operators.push(operator);
+			operators.push(ParserOperator::Operator(operator));
 		}
 		Coalescence::Multiple(coalesces) => {
 			let operator_state = operators.len();
@@ -39,12 +57,20 @@ fn parse(coalescence: Coalescence, operators: &mut Vec<Spanned<Operator>>,
 	}
 }
 
-fn construct(operators: &mut Vec<Spanned<Operator>>, nodes: &mut Vec<Spanned<Node>>) {
+fn construct(operators: &mut Vec<ParserOperator>, nodes: &mut Vec<Spanned<Node>>) {
 	let operator = operators.pop().unwrap();
-	let right = nodes.pop().unwrap_or_else(|| panic!("Node stack is empty"));
-	let left = nodes.pop().unwrap_or_else(|| panic!("Node stack is empty"));
-
-	let span = Span(left.span.byte_start(), right.span.byte_end());
-	let node = Node::Operator(operator, Box::new(left), Box::new(right));
-	nodes.push(Spanned::new(node, span));
+	match operator {
+		ParserOperator::Operator(operator) => {
+			let (left, right) = (nodes.pop().unwrap(), nodes.pop().unwrap());
+			let span = Span(left.span.byte_start(), right.span.byte_end());
+			let node = Node::Operator(operator, Box::new(left), Box::new(right));
+			nodes.push(Spanned::new(node, span))
+		}
+		ParserOperator::Function(function) => {
+			let node = nodes.pop().unwrap();
+			let span = Span(function.span.byte_start(), node.span.byte_end());
+			let node = Node::Function(function.node, Box::new(node));
+			nodes.push(Spanned::new(node, span))
+		}
+	}
 }
