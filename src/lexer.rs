@@ -36,12 +36,20 @@ impl<'a> Lexer<'a> {
 	}
 
 	fn number(&mut self) -> usize {
+		let mut exponent_divider = false;
 		while let Some((index, character)) = self.characters.peek() {
 			match character {
-				'.' | 'e' => (),
+				'.' => (),
+				'e' => {
+					exponent_divider = true;
+					self.characters.next();
+					continue;
+				}
+				'-' if exponent_divider => (),
 				_ if character.is_digit(16) => (),
 				_ => return *index,
 			};
+
 			self.characters.next();
 		}
 		self.byte_end
