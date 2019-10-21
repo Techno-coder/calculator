@@ -61,7 +61,8 @@ fn construct(operators: &mut Vec<ParserOperator>, nodes: &mut Vec<Spanned<Node>>
 	let operator = operators.pop().unwrap();
 	match operator {
 		ParserOperator::Operator(operator) => {
-			let (left, right) = (nodes.pop().unwrap(), nodes.pop().unwrap());
+			let right = nodes.pop().unwrap();
+			let left = nodes.pop().unwrap();
 			let span = Span(left.span.byte_start(), right.span.byte_end());
 			let node = Node::Operator(operator, Box::new(left), Box::new(right));
 			nodes.push(Spanned::new(node, span))
