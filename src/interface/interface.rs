@@ -18,17 +18,8 @@ pub fn interface() -> Result {
 		match event {
 			InputEvent::Keyboard(event) => match event {
 				KeyEvent::Enter => evaluate(context, true)?,
-				KeyEvent::Char(character) => {
-					execute!(stdout(), Output(character.to_string()))?;
-					context.expression.push(character);
-					evaluate(context, false)?;
-				}
-				KeyEvent::Backspace => {
-					if context.expression.pop().is_some() {
-						execute!(stdout(), Left(1))?;
-						evaluate(context, false)?;
-					}
-				}
+				KeyEvent::Char(key_character) => character(context, key_character)?,
+				KeyEvent::Backspace => erase(context)?,
 				KeyEvent::Ctrl('c') => break,
 				KeyEvent::Ctrl('d') => break,
 				KeyEvent::Ctrl('l') => {
@@ -41,8 +32,20 @@ pub fn interface() -> Result {
 					evaluate(context, false)?;
 					queue!(stdout(), Clear(ClearType::UntilNewLine))?;
 				}
+				KeyEvent::Ctrl('w') => erase_group(context)?,
 				KeyEvent::Up => super::history::history_up(context)?,
 				KeyEvent::Down => super::history::history_down(context)?,
+				KeyEvent::Left if context.cursor_position >= 1 => {
+					queue!(stdout(), Left(1))?;
+					context.cursor_position -= 1;
+				}
+				KeyEvent::Right => {
+					let count = context.expression.chars().count();
+					if context.cursor_position < count {
+						queue!(stdout(), Right(1))?;
+						context.cursor_position += 1;
+					}
+				}
 				_ => (),
 			}
 			_ => (),
@@ -52,16 +55,73 @@ pub fn interface() -> Result {
 	Ok(())
 }
 
+fn character(context: &mut Context, character: char) -> Result {
+	let index = context.expression.char_indices()
+		.nth(context.cursor_position).map(|(index, _)| index)
+		.unwrap_or(context.expression.len());
+	context.expression.insert(index, character);
+
+	let slice = &context.expression[index..];
+	execute!(stdout(), SavePos, Output(slice.to_string()),
+		ResetPos, Right(1))?;
+
+	context.cursor_position += 1;
+	evaluate(context, false)
+}
+
+fn erase(context: &mut Context) -> Result {
+	match context.cursor_position >= 1 {
+		false => Ok(()),
+		true => {
+			context.cursor_position -= 1;
+			let index = context.expression.char_indices()
+				.nth(context.cursor_position).map(|(index, _)| index).unwrap();
+			context.expression.remove(index);
+
+			execute!(stdout(), Left(1), SavePos, Clear(ClearType::UntilNewLine),
+				Output(context.expression[index..].to_string()), ResetPos)?;
+			evaluate(context, false)
+		}
+	}
+}
+
+fn erase_group(context: &mut Context) -> Result {
+	let end_index = context.expression.char_indices()
+		.nth(context.cursor_position).map(|(index, _)| index)
+		.unwrap_or(context.expression.len());
+	let start_index = context.expression[..end_index].char_indices().rev()
+		.skip_while(|(_, character)| character.is_whitespace())
+		.skip_while(|(_, character)| !character.is_whitespace())
+		.take_while(|(_, character)| character.is_whitespace())
+		.last().map(|(index, _)| index).unwrap_or(0);
+
+	let count = context.expression[start_index..end_index].chars().count();
+	match count > 0 {
+		false => Ok(()),
+		true => {
+			context.cursor_position -= count;
+			context.expression.replace_range(start_index..end_index, "");
+			execute!(stdout(), Left(count as u16), SavePos, Clear(ClearType::UntilNewLine),
+				Output(context.expression[start_index..].to_string()), ResetPos)?;
+			evaluate(context, false)
+		}
+	}
+}
+
 fn evaluate(context: &mut Context, store: bool) -> Result {
-	execute!(stdout(), Clear(ClearType::UntilNewLine))?;
+	let (column, row) = crossterm::cursor().pos()?;
+	let difference = (context.expression.chars().count() - context.cursor_position) as u16;
+	queue!(stdout(), Right(difference), Clear(ClearType::UntilNewLine))?;
+
 	let coalescence = match super::check::check(context)? {
+		None => return Ok(queue!(stdout(), Goto(column, row))?),
 		Some(coalescence) => coalescence,
-		None => return Ok(()),
 	};
 
 	if store {
 		let expression = &mut context.expression;
 		let expression = std::mem::replace(expression, String::new());
+		context.cursor_position = 0;
 		context.push_history(expression);
 	}
 
@@ -73,17 +133,16 @@ fn evaluate(context: &mut Context, store: bool) -> Result {
 		}
 		Ok(evaluation) => match store {
 			true => {
-				execute!(stdout(), Clear(ClearType::UntilNewLine))?;
+				queue!(stdout(), Clear(ClearType::UntilNewLine))?;
 				render::line_break(true)?;
 				let index = context.push_value(evaluation);
 				render::value_index(index);
 				render::evaluation(evaluation, None);
 			}
 			false => {
-				queue!(stdout(), SavePos)?;
-				print!("  {}= ", Colored::Fg(Color::Green));
+				print!(" {}= ", Colored::Fg(Color::Green));
 				render::evaluation(evaluation, Some(Color::Green));
-				queue!(stdout(), SetFg(Color::Reset), ResetPos)?;
+				queue!(stdout(), SetFg(Color::Reset), Goto(column, row))?;
 				return Ok(());
 			}
 		}

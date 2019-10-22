@@ -8,6 +8,7 @@ pub struct Context {
 	variables: HashMap<String, f64>,
 	history: Vec<String>,
 
+	pub cursor_position: usize,
 	pub history_offset: usize,
 	pub expression: String,
 }
