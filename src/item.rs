@@ -12,6 +12,7 @@ pub enum Function {
 	NaturalLogarithm,
 	BinaryLogarithm,
 	DecimalLogarithm,
+	UnaryMinus,
 }
 
 #[derive(Debug, PartialEq)]

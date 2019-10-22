@@ -39,6 +39,7 @@ impl Spanned<Node> {
 					Function::NaturalLogarithm => value.ln(),
 					Function::BinaryLogarithm => value.log2(),
 					Function::DecimalLogarithm => value.log10(),
+					Function::UnaryMinus => -value,
 				}
 			}
 			Node::Operator(operator, left_node, right_node) => {
