@@ -20,7 +20,7 @@ pub fn basic() -> super::Result {
 			Ok(evaluation) => {
 				let index = context.push_value(evaluation);
 				super::render::value_index(index);
-				super::render::evaluation(evaluation);
+				super::render::evaluation(evaluation, None);
 				println!();
 			}
 			Err(error) => {

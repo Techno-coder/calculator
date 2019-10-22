@@ -7,20 +7,22 @@ use crate::span::{Span, Spanned};
 
 use super::Result;
 
-pub fn value_index(index: usize)  {
+pub fn value_index(index: usize) {
 	print!("{}{:x}{} ", "[".white().bold(), index, "]".white().bold());
 }
 
-pub fn evaluation(evaluation: f64) {
+pub fn evaluation(evaluation: f64, colour: Option<Color>) {
+	let colour = Colored::Fg(colour.unwrap_or(Color::Grey));
 	let exponentiation_range = 1e-3 < evaluation.abs() && evaluation.abs() < 1e9;
 	match exponentiation_range || !evaluation.is_normal() {
-		true => print!("{}", evaluation),
+		true => print!("{}{}", colour, evaluation),
 		false => {
 			let string = format!("{:e}", evaluation);
-			print!("{}{}{}", &string[..string.find('e').unwrap()],
-				"e".white().bold(), &string[string.find('e').unwrap() + 1..]);
+			print!("{}{}{}{}{}", colour, &string[..string.find('e').unwrap()],
+				"e".white().bold(), colour, &string[string.find('e').unwrap() + 1..]);
 		}
 	}
+	print!("{}", Colored::Fg(Color::Reset));
 }
 
 pub fn line_error(error: &Spanned<Error>) -> Result {
