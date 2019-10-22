@@ -111,12 +111,11 @@ fn erase_group(context: &mut Context) -> Result {
 }
 
 fn evaluate(context: &mut Context, store: bool) -> Result {
-	let (column, row) = crossterm::cursor().pos()?;
 	let difference = (context.expression.chars().count() - context.cursor_position) as u16;
 	queue!(stdout(), Right(difference), Clear(ClearType::UntilNewLine))?;
 
 	let coalescence = match super::check::check(context)? {
-		None => return Ok(queue!(stdout(), Goto(column, row))?),
+		None => return render::anchor_start(context.cursor_position),
 		Some(coalescence) => coalescence,
 	};
 
@@ -144,8 +143,7 @@ fn evaluate(context: &mut Context, store: bool) -> Result {
 			false => {
 				print!(" {}= ", Colored::Fg(Color::Green));
 				render::evaluation(evaluation, Some(Color::Green));
-				queue!(stdout(), SetFg(Color::Reset), Goto(column, row))?;
-				return Ok(());
+				return render::anchor_start(context.cursor_position);
 			}
 		}
 	}
