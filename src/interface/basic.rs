@@ -46,7 +46,7 @@ pub fn evaluate_direct() -> super::Result {
 	Ok(())
 }
 
-fn evaluate(context: &mut Context) -> Result<f64, Spanned<Error>> {
+pub fn evaluate(context: &mut Context) -> Result<f64, Spanned<Error>> {
 	let lexer = &mut crate::lexer::Lexer::new(&context.expression);
 	let coalescence = crate::coalesce::coalesce_root(lexer)?;
 	let node = crate::parse::parse_root(coalescence);

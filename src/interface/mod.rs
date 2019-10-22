@@ -1,4 +1,4 @@
-pub use basic::{basic, evaluate_direct};
+pub use basic::{basic, evaluate, evaluate_direct};
 pub use interface::interface;
 
 type Result = std::result::Result<(), Box<dyn std::error::Error>>;

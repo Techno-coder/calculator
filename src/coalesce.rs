@@ -29,16 +29,10 @@ fn coalesce(lexer: &mut Lexer, mut last_valued: bool, expect_parenthesis: bool)
 			Token::Operator(operator) => {
 				if !last_valued {
 					match operator {
-						Operator::Minus => match coalesces.last() {
-							Some(Coalescence::Function(_)) => {
-								let function = Spanned::new(Function::UnaryMinus, token.span);
-								coalesces.push(Coalescence::Function(function));
-								continue;
-							}
-							_ => {
-								let terminal = Spanned::new(0.0, token.span);
-								coalesces.push(Coalescence::Terminal(terminal));
-							}
+						Operator::Minus => {
+							let function = Spanned::new(Function::UnaryMinus, token.span);
+							coalesces.push(Coalescence::Function(function));
+							continue;
 						}
 						_ => return Err(token.map(Error::ExpectedValued)),
 					}

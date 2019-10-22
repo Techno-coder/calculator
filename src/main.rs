@@ -9,6 +9,8 @@ mod item;
 mod interface;
 mod coalescence;
 mod context;
+#[cfg(test)]
+mod tests;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let argument = std::env::args().nth(1);

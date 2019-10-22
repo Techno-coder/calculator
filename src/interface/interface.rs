@@ -29,6 +29,8 @@ pub fn interface() -> Result {
 				KeyEvent::Ctrl('u') => {
 					context.expression.clear();
 					super::render::anchor_start(0)?;
+					context.cursor_position = 0;
+
 					evaluate(context, false)?;
 					queue!(stdout(), Clear(ClearType::UntilNewLine))?;
 				}
