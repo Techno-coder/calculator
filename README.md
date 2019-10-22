@@ -27,7 +27,7 @@ advanced terminals.
 ```
 $ calculator -b/--basic
 ```
-Evaluation mode reads from the standard input pipe and outputs directly.
+Evaluation mode reads from the standard input pipe and outputs results directly.
 ```
 $ echo expression | calculator -e/--evaluation
 ```
@@ -76,6 +76,12 @@ Whitespace is required after the function name.
 * `asin` - Inverse sine
 * `acos` - Inverse cosine
 * `atan` - Inverse tangent
+
+The trigonometric functions can take and return degrees by appending `'`:
+```
+>> asin' 1
+[0] 90
+```
 
 ## Constants
 * `e` - Euler number

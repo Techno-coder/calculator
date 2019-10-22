@@ -1,6 +1,6 @@
 use crate::context::Context;
 use crate::error::Error;
-use crate::item::Function;
+use crate::item::{Function, Trigonometric};
 use crate::span::Spanned;
 use crate::token::Operator;
 
@@ -21,12 +21,17 @@ impl Spanned<Node> {
 			Node::Function(function, node) => {
 				let value = node.evaluate(context)?;
 				match function {
-					Function::Sine => value.sin(),
-					Function::Cosine => value.cos(),
-					Function::Tangent => value.tan(),
-					Function::InverseSine => value.asin(),
-					Function::InverseCosine => value.acos(),
-					Function::InverseTangent => value.atan(),
+					Function::Trigonometric(function, unit) => {
+						use Trigonometric::*;
+						match function {
+							Sine => unit.radians(value).sin(),
+							Cosine => unit.radians(value).cos(),
+							Tangent => unit.radians(value).tan(),
+							InverseSine => unit.apply(value.asin()),
+							InverseCosine => unit.apply(value.acos()),
+							InverseTangent => unit.apply(value.atan()),
+						}
+					}
 					Function::AbsoluteValue => value.abs(),
 					Function::SquareRoot => match value >= 0.0 {
 						false => return Err(Spanned::new(Error::NegativeRoot, node.span)),

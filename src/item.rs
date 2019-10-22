@@ -1,11 +1,6 @@
 #[derive(Debug, PartialEq)]
 pub enum Function {
-	Sine,
-	Cosine,
-	Tangent,
-	InverseSine,
-	InverseCosine,
-	InverseTangent,
+	Trigonometric(Trigonometric, AngleUnit),
 	AbsoluteValue,
 	SquareRoot,
 	CubeRoot,
@@ -13,6 +8,38 @@ pub enum Function {
 	BinaryLogarithm,
 	DecimalLogarithm,
 	UnaryMinus,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Trigonometric {
+	Sine,
+	Cosine,
+	Tangent,
+	InverseSine,
+	InverseCosine,
+	InverseTangent,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum AngleUnit {
+	Radians,
+	Degrees,
+}
+
+impl AngleUnit {
+	pub fn apply(&self, radians: f64) -> f64 {
+		match self {
+			AngleUnit::Radians => radians,
+			AngleUnit::Degrees => radians.to_degrees(),
+		}
+	}
+
+	pub fn radians(&self, value: f64) -> f64 {
+		match self {
+			AngleUnit::Radians => value,
+			AngleUnit::Degrees => value.to_radians(),
+		}
+	}
 }
 
 #[derive(Debug, PartialEq)]

@@ -2,7 +2,7 @@ use std::iter::Peekable;
 use std::str::CharIndices;
 
 use crate::error::Error;
-use crate::item::{Constant, Function};
+use crate::item::{AngleUnit, Constant, Function, Trigonometric};
 use crate::span::{Span, Spanned};
 use crate::token::{Operator, Token};
 
@@ -102,7 +102,7 @@ impl<'a> Lexer<'a> {
 		while let Some((index, character)) = self.characters.peek() {
 			let invalid_character = character.is_whitespace() ||
 				character.is_ascii_punctuation();
-			match character != &'$' && invalid_character {
+			match !['$', '\''].contains(character) && invalid_character {
 				false => self.characters.next(),
 				true => return *index,
 			};
@@ -136,13 +136,8 @@ impl<'a> Iterator for Lexer<'a> {
 		if !character.is_ascii_punctuation() {
 			let byte_end = self.take_identifier();
 			let span = Span(byte_start, byte_end);
-			let token = Spanned::new(match &self.string[byte_start..byte_end] {
-				"sin" => Token::Function(Function::Sine),
-				"cos" => Token::Function(Function::Cosine),
-				"tan" => Token::Function(Function::Tangent),
-				"asin" => Token::Function(Function::InverseSine),
-				"acos" => Token::Function(Function::InverseCosine),
-				"atan" => Token::Function(Function::InverseTangent),
+			let mut slice = &self.string[byte_start..byte_end];
+			let token = Spanned::new(match slice {
 				"abs" => Token::Function(Function::AbsoluteValue),
 				"sqrt" => Token::Function(Function::SquareRoot),
 				"cbrt" => Token::Function(Function::CubeRoot),
@@ -151,7 +146,23 @@ impl<'a> Iterator for Lexer<'a> {
 				"log10" => Token::Function(Function::DecimalLogarithm),
 				"e" => Token::Constant(Constant::E),
 				"pi" => Token::Constant(Constant::Pi),
-				_ => return Some(Err(Spanned::new(Error::InvalidItem, span))),
+				_ => {
+					let mut unit = AngleUnit::Radians;
+					if let Some((index, '\'')) = slice.char_indices().last() {
+						unit = AngleUnit::Degrees;
+						slice = &slice[..index];
+					}
+
+					Token::Function(Function::Trigonometric(match slice {
+						"sin" => Trigonometric::Sine,
+						"cos" => Trigonometric::Cosine,
+						"tan" => Trigonometric::Tangent,
+						"asin" => Trigonometric::InverseSine,
+						"acos" => Trigonometric::InverseCosine,
+						"atan" => Trigonometric::InverseTangent,
+						_ => return Some(Err(Spanned::new(Error::InvalidItem, span))),
+					}, unit))
+				}
 			}, span);
 			return Some(Ok(token));
 		}
