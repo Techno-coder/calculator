@@ -15,7 +15,21 @@
 
 ## Installation
 ```
-cargo install --locked --git https://github.com/Techno-coder/calculator
+$ cargo install --locked --git https://github.com/Techno-coder/calculator
+```
+
+## Execution
+```
+$ calculator
+```
+Basic mode does not update on each key press and may work better for less
+advanced terminals.
+```
+$ calculator -b/--basic
+```
+Evaluation mode reads from the standard input pipe and outputs directly.
+```
+$ echo expression | calculator -e/--evaluation
 ```
 
 ## Arithmetic Operators

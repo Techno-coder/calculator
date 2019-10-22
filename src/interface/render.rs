@@ -7,6 +7,22 @@ use crate::span::{Span, Spanned};
 
 use super::Result;
 
+pub fn value_index(index: usize)  {
+	print!("{}{:x}{} ", "[".white().bold(), index, "]".white().bold());
+}
+
+pub fn evaluation(evaluation: f64) {
+	let exponentiation_range = 1e-3 < evaluation.abs() && evaluation.abs() < 1e9;
+	match exponentiation_range || !evaluation.is_normal() {
+		true => print!("{}", evaluation),
+		false => {
+			let string = format!("{:e}", evaluation);
+			print!("{}{}{}", &string[..string.find('e').unwrap()],
+				"e".white().bold(), &string[string.find('e').unwrap() + 1..]);
+		}
+	}
+}
+
 pub fn line_error(error: &Spanned<Error>) -> Result {
 	let Span(byte_start, byte_end) = error.span;
 	let specific = "^".repeat(byte_end - byte_start).to_owned();
@@ -32,7 +48,7 @@ pub fn line_break(clear: bool) -> Result {
 
 pub fn anchor_start(offset: usize) -> Result {
 	let (_, row) = crossterm::cursor().pos()?;
-	Ok(queue!(stdout(), Goto((super::interface::PROMPT.len() + offset) as u16, row))?)
+	Ok(queue!(stdout(), Goto((super::PROMPT.len() + offset) as u16, row))?)
 }
 
 pub fn clear_buffer() -> Result {

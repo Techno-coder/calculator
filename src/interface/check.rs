@@ -35,7 +35,7 @@ pub fn coalesce_anchors(coalescence: &Coalescence) -> super::Result {
 
 	let (_, row) = crossterm::cursor().pos()?;
 	anchors.iter().try_for_each(|offset| queue!(stdout(),
-		Goto((super::interface::PROMPT.len() + offset) as u16, row),
+		Goto((super::PROMPT.len() + offset) as u16, row),
 		Output("^".to_string())))?;
 
 	if let Some(offset) = anchors.last() {

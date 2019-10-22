@@ -6,12 +6,11 @@ use crate::context::Context;
 
 use super::{check, render, Result};
 
-pub const PROMPT: &str = ">> ";
-
+/// Spawns an interface with immediate expression verification.
 pub fn interface() -> Result {
 	let mut reader = crossterm::input().read_sync();
 	let _screen = RawScreen::into_raw_mode()?;
-	print!("{}", PROMPT.white().bold());
+	print!("{}", super::PROMPT.white().bold());
 	stdout().flush()?;
 
 	let context = &mut Context::default();
@@ -72,22 +71,13 @@ fn evaluate(context: &mut Context) -> Result {
 		Ok(evaluation) => {
 			render::line_break(true)?;
 			let index = context.push_value(evaluation);
-			print!("{}{:x}{} ", "[".white().bold(), index, "]".white().bold());
-
-			let exponentiation_range = 1e-3 < evaluation.abs() && evaluation.abs() < 1e9;
-			match exponentiation_range || !evaluation.is_normal() {
-				true => print!("{}", evaluation),
-				false => {
-					let string = format!("{:e}", evaluation);
-					print!("{}{}{}", &string[..string.find('e').unwrap()],
-						"e".white().bold(), &string[string.find('e').unwrap() + 1..]);
-				}
-			}
+			render::value_index(index);
+			render::evaluation(evaluation);
 		}
 	}
 
 	render::line_break(false)?;
-	print!("{}", PROMPT.white().bold());
+	print!("{}", super::PROMPT.white().bold());
 	Ok(())
 }
 
