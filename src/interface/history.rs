@@ -4,7 +4,7 @@ use crossterm::*;
 
 use crate::context::Context;
 
-use super::{check, Result};
+use super::{interface, Result};
 
 pub fn history_up(context: &mut Context) -> Result {
 	context.history_offset += 1;
@@ -16,8 +16,9 @@ pub fn history_up(context: &mut Context) -> Result {
 			}
 
 			context.expression = history;
+			context.cursor_position = context.expression.len();
 			queue!(stdout(), Clear(ClearType::UntilNewLine), Output(context.expression.clone()))?;
-			check::check(context)?;
+			interface::evaluate(context, false)?;
 		}
 	}
 	Ok(())
@@ -32,11 +33,12 @@ pub fn history_down(context: &mut Context) -> Result {
 	}
 
 	let expression = &mut context.expression;
+	context.cursor_position = expression.len();
 	if current_length > 0 {
 		queue!(stdout(), Left(current_length as u16))?;
 	}
 
 	queue!(stdout(), Clear(ClearType::UntilNewLine), Output(expression.clone()))?;
-	check::check(context)?;
+	interface::evaluate(context, false)?;
 	Ok(())
 }

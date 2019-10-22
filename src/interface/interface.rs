@@ -110,7 +110,7 @@ fn erase_group(context: &mut Context) -> Result {
 	}
 }
 
-fn evaluate(context: &mut Context, store: bool) -> Result {
+pub fn evaluate(context: &mut Context, store: bool) -> Result {
 	let difference = (context.expression.chars().count() - context.cursor_position) as u16;
 	queue!(stdout(), Right(difference), Clear(ClearType::UntilNewLine))?;
 
