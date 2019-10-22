@@ -37,7 +37,7 @@ fn parse(coalescence: Coalescence, operators: &mut Vec<ParserOperator>,
 			operators.push(ParserOperator::Function(function)),
 		Coalescence::Operator(operator) => {
 			while let Some(stack_operator) = operators.last() {
-				match stack_operator.precedence() > operator.node.precedence() {
+				match stack_operator.precedence() >= operator.node.precedence() {
 					true if operators.len() > state => construct(operators, nodes),
 					_ => break,
 				}

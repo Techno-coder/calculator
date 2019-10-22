@@ -12,15 +12,6 @@ pub enum Token {
 	Coalesce(usize),
 }
 
-impl Token {
-	pub fn is_operator(&self) -> bool {
-		match self {
-			Token::Operator(_) => true,
-			_ => false,
-		}
-	}
-}
-
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Operator {
 	Add,

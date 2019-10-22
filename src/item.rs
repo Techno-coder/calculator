@@ -6,6 +6,12 @@ pub enum Function {
 	InverseSine,
 	InverseCosine,
 	InverseTangent,
+	AbsoluteValue,
+	SquareRoot,
+	CubeRoot,
+	NaturalLogarithm,
+	BinaryLogarithm,
+	DecimalLogarithm,
 }
 
 #[derive(Debug, PartialEq)]

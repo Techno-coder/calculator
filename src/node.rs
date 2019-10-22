@@ -27,6 +27,18 @@ impl Spanned<Node> {
 					Function::InverseSine => value.asin(),
 					Function::InverseCosine => value.acos(),
 					Function::InverseTangent => value.atan(),
+					Function::AbsoluteValue => value.abs(),
+					Function::SquareRoot => match value >= 0.0 {
+						false => return Err(Spanned::new(Error::NegativeRoot, node.span)),
+						true => value.sqrt(),
+					},
+					Function::CubeRoot => match value >= 0.0 {
+						false => return Err(Spanned::new(Error::NegativeRoot, node.span)),
+						true => value.cbrt(),
+					},
+					Function::NaturalLogarithm => value.ln(),
+					Function::BinaryLogarithm => value.log2(),
+					Function::DecimalLogarithm => value.log10(),
 				}
 			}
 			Node::Operator(operator, left_node, right_node) => {
@@ -36,12 +48,9 @@ impl Spanned<Node> {
 					Operator::Add => left + right,
 					Operator::Minus => left - right,
 					Operator::Multiply => left * right,
-					Operator::Divide => {
-						if right != 0.0 {
-							left / right
-						} else {
-							return Err(Spanned::new(Error::ZeroDivision, right_node.span));
-						}
+					Operator::Divide => match right != 0.0 {
+						false => return Err(Spanned::new(Error::ZeroDivision, right_node.span)),
+						true => left / right
 					}
 					Operator::Modulo => left % right,
 					Operator::Power => left.powf(right),

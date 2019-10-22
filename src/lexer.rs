@@ -10,7 +10,6 @@ use crate::token::{Operator, Token};
 pub struct Lexer<'a> {
 	string: &'a str,
 	characters: Peekable<CharIndices<'a>>,
-	last_operator: bool,
 	last_coalesce: bool,
 	byte_end: usize,
 }
@@ -20,7 +19,6 @@ impl<'a> Lexer<'a> {
 		Lexer {
 			string,
 			characters: string.char_indices().peekable(),
-			last_operator: true,
 			last_coalesce: false,
 			byte_end: string.len(),
 		}
@@ -123,10 +121,7 @@ impl<'a> Iterator for Lexer<'a> {
 			return self.next();
 		}
 
-		let is_negation = character == '-' && self.last_operator;
-		self.last_operator = false;
-
-		if character.is_digit(10) || is_negation {
+		if character.is_digit(10) {
 			return Some(self.parse_number(character, byte_start));
 		} else if character == ';' {
 			let (byte_end, counter) = self.take_coalesce();
@@ -148,6 +143,12 @@ impl<'a> Iterator for Lexer<'a> {
 				"asin" => Token::Function(Function::InverseSine),
 				"acos" => Token::Function(Function::InverseCosine),
 				"atan" => Token::Function(Function::InverseTangent),
+				"abs" => Token::Function(Function::AbsoluteValue),
+				"sqrt" => Token::Function(Function::SquareRoot),
+				"cbrt" => Token::Function(Function::CubeRoot),
+				"ln" => Token::Function(Function::NaturalLogarithm),
+				"log2" => Token::Function(Function::BinaryLogarithm),
+				"log10" => Token::Function(Function::DecimalLogarithm),
 				"e" => Token::Constant(Constant::E),
 				"pi" => Token::Constant(Constant::Pi),
 				_ => return Some(Err(Spanned::new(Error::InvalidItem, span))),
@@ -168,8 +169,6 @@ impl<'a> Iterator for Lexer<'a> {
 			'^' => Token::Operator(Operator::Power),
 			_ => return Some(Err(Spanned::new(Error::InvalidCharacter(character), span))),
 		}, span);
-
-		self.last_operator = token.node.is_operator();
 		Some(Ok(token))
 	}
 }
@@ -186,8 +185,8 @@ mod tests {
 		assert_eq!(tokens.unwrap(), &[Token::ParenthesisOpen,
 			Token::Terminal(1.0), Token::Operator(Operator::Add), Token::Terminal(2.0),
 			Token::ParenthesisClose, Token::Operator(Operator::Divide), Token::Terminal(3.0),
-			Token::Operator(Operator::Multiply), Token::Terminal(-54.0), Token::Coalesce(1),
-			Token::Coalesce(1)]);
+			Token::Operator(Operator::Multiply), Token::Operator(Operator::Minus),
+			Token::Terminal(54.0), Token::Coalesce(1), Token::Coalesce(1)]);
 	}
 
 	#[test]
@@ -195,10 +194,10 @@ mod tests {
 		let string = "10 + -10.0 0x0a 0b1010 0o12 + -1e1";
 		let tokens: Result<Vec<_>, _> = Lexer::new(string)
 			.map(|token| token.map(|token| token.node)).collect();
-		assert_eq!(tokens.unwrap(), &[Token::Terminal(10.0),
-			Token::Operator(Operator::Add), Token::Terminal(-10.0), Token::Terminal(10.0),
+		assert_eq!(tokens.unwrap(), &[Token::Terminal(10.0), Token::Operator(Operator::Add),
+			Token::Operator(Operator::Minus), Token::Terminal(10.0), Token::Terminal(10.0),
 			Token::Terminal(10.0), Token::Terminal(10.0), Token::Operator(Operator::Add),
-			Token::Terminal(-10.0)]);
+			Token::Operator(Operator::Minus), Token::Terminal(10.0)]);
 	}
 
 	#[test]

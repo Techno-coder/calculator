@@ -2,7 +2,7 @@ use crate::coalescence::Coalescence;
 use crate::error::Error;
 use crate::lexer::Lexer;
 use crate::span::{Span, Spanned};
-use crate::token::Token;
+use crate::token::{Operator, Token};
 
 pub fn coalesce_root(lexer: &mut Lexer) -> Result<Coalescence, Spanned<Error>> {
 	coalesce(lexer, false, false)
@@ -25,13 +25,17 @@ fn coalesce(lexer: &mut Lexer, mut last_valued: bool, expect_parenthesis: bool)
 				coalesces.push(coalesce(lexer, false, true)?);
 				last_valued = true;
 			}
-			Token::Operator(operator) => match last_valued {
-				true => {
-					coalesces.push(Coalescence::Operator(token.map(operator)));
-					last_valued = false;
+			Token::Operator(operator) => {
+				if !last_valued {
+					coalesces.push(match operator {
+						Operator::Minus => Coalescence::Terminal(Spanned::new(0.0, token.span)),
+						_ => return Err(token.map(Error::ExpectedValued)),
+					});
 				}
-				false => return Err(token.map(Error::ExpectedValued)),
-			},
+
+				coalesces.push(Coalescence::Operator(token.map(operator)));
+				last_valued = false;
+			}
 			Token::Terminal(terminal) => match last_valued {
 				false => {
 					coalesces.push(Coalescence::Terminal(token.map(terminal)));

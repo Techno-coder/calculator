@@ -48,6 +48,13 @@ In order of precedence:
 Functions take the term immediately to the right. 
 Whitespace is required after the function name.
 
+* `abs` - Absolute value
+* `sqrt` - Square root
+* `cbrt` - Cube root
+* `ln` - Natural logarithm
+* `log2` - Binary logarithm
+* `log10` - Decimal logarithm
+
 ### Trigonometry
 * `sin` - Sine
 * `cos` - Cosine

@@ -5,4 +5,4 @@ authors = ["Techno-coder <8334328+Techno-coder@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-crossterm = "^0.11"
+crossterm = "^0.12"

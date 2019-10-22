@@ -13,6 +13,7 @@ pub enum Error {
 	EmptyBrackets,
 	InvalidCoalesce,
 	ZeroDivision,
+	NegativeRoot,
 }
 
 impl fmt::Display for Error {
@@ -40,6 +41,8 @@ impl fmt::Display for Error {
 				write!(f, "Invalid coalesce"),
 			Error::ZeroDivision =>
 				write!(f, "Division by zero"),
+			Error::NegativeRoot =>
+				write!(f, "Negative root is undefined"),
 		}
 	}
 }
