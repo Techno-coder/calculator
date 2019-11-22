@@ -37,7 +37,7 @@ impl<'a> Lexer<'a> {
 		let mut exponent_divider = false;
 		while let Some((index, character)) = self.characters.peek() {
 			match character {
-				'.' => (),
+				'.' | '_' => (),
 				'e' => {
 					exponent_divider = true;
 					self.characters.next();
@@ -75,13 +75,13 @@ impl<'a> Lexer<'a> {
 		};
 
 		let byte_end = self.number();
-		let slice = &self.string[number_start..byte_end];
+		let string = &self.string[number_start..byte_end].matches(|c| c != '_').collect::<String>();
 		let span = Span(byte_start, byte_end);
 
 		let error = Spanned::new(Error::InvalidTerminal, span);
 		match radix {
-			10 => slice.parse::<f64>().map_err(|_| error),
-			_ => i64::from_str_radix(slice, radix).map_err(|_| error)
+			10 => string.parse::<f64>().map_err(|_| error),
+			_ => i64::from_str_radix(string, radix).map_err(|_| error)
 				.map(|terminal| terminal as f64),
 		}.map(|terminal| Spanned::new(Token::Terminal(terminal), span))
 	}
@@ -202,13 +202,14 @@ mod tests {
 
 	#[test]
 	fn test_numerical_format() {
-		let string = "10 + -10.0 0x0a 0b1010 0o12 + -1e1";
+		let string = "10 + -10.0 0x0a 0b1010 0o12 + -1e1 + 1_023_568";
 		let tokens: Result<Vec<_>, _> = Lexer::new(string)
 			.map(|token| token.map(|token| token.node)).collect();
 		assert_eq!(tokens.unwrap(), &[Token::Terminal(10.0), Token::Operator(Operator::Add),
 			Token::Operator(Operator::Minus), Token::Terminal(10.0), Token::Terminal(10.0),
 			Token::Terminal(10.0), Token::Terminal(10.0), Token::Operator(Operator::Add),
-			Token::Operator(Operator::Minus), Token::Terminal(10.0)]);
+			Token::Operator(Operator::Minus), Token::Terminal(10.0), Token::Operator(Operator::Add),
+            Token::Terminal(1023568.0)]);
 	}
 
 	#[test]
