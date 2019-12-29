@@ -75,7 +75,8 @@ impl<'a> Lexer<'a> {
 		};
 
 		let byte_end = self.number();
-		let string = &self.string[number_start..byte_end].matches(|c| c != '_').collect::<String>();
+		let string = &self.string[number_start..byte_end]
+			.matches(|c| c != '_').collect::<String>();
 		let span = Span(byte_start, byte_end);
 
 		let error = Spanned::new(Error::InvalidTerminal, span);
@@ -209,7 +210,7 @@ mod tests {
 			Token::Operator(Operator::Minus), Token::Terminal(10.0), Token::Terminal(10.0),
 			Token::Terminal(10.0), Token::Terminal(10.0), Token::Operator(Operator::Add),
 			Token::Operator(Operator::Minus), Token::Terminal(10.0), Token::Operator(Operator::Add),
-            Token::Terminal(1023568.0)]);
+			Token::Terminal(1023568.0)]);
 	}
 
 	#[test]

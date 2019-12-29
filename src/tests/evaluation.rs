@@ -26,6 +26,16 @@ fn test_functions() {
 	assert_eq!(evaluate("sqrt -1 + 1;;"), Ok(0.0));
 }
 
+#[test]
+fn test_implicit() {
+	assert_eq!(evaluate("1 (2)"), Ok(2.0));
+	assert_eq!(evaluate("1 (2 (3))"), Ok(6.0));
+	assert_eq!(evaluate("1 (2) (3)"), Ok(6.0));
+	assert_eq!(evaluate("(1) 2 + 3"), Ok(5.0));
+	assert_eq!(evaluate("abs -1 (2)"), Ok(2.0));
+	assert_eq!(evaluate("(abs -1) 2"), Ok(2.0));
+}
+
 fn evaluate(expression: &str) -> Result<f64, Error> {
 	let mut context = &mut Context::default();
 	context.expression = expression.to_owned();

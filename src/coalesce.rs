@@ -15,6 +15,7 @@ fn coalesce(lexer: &mut Lexer, mut last_valued: bool, expect_parenthesis: bool)
 	let mut coalesces = Vec::new();
 	while let Some(token) = lexer.next() {
 		let token = token?;
+		let span = token.span;
 		last_byte_end = token.span.byte_end();
 		match token.node {
 			Token::ParenthesisClose if expect_parenthesis => match coalesces.is_empty() {
@@ -23,6 +24,11 @@ fn coalesce(lexer: &mut Lexer, mut last_valued: bool, expect_parenthesis: bool)
 			},
 			Token::ParenthesisClose => return Err(token.map(Error::MismatchedBracket)),
 			Token::ParenthesisOpen => {
+				if last_valued {
+					let operator = Spanned::new(Operator::Multiply, span);
+					coalesces.push(Coalescence::Operator(operator));
+				}
+
 				coalesces.push(coalesce(lexer, false, true)?);
 				last_valued = true;
 			}
@@ -30,7 +36,7 @@ fn coalesce(lexer: &mut Lexer, mut last_valued: bool, expect_parenthesis: bool)
 				if !last_valued {
 					match operator {
 						Operator::Minus => {
-							let function = Spanned::new(Function::UnaryMinus, token.span);
+							let function = Spanned::new(Function::UnaryMinus, span);
 							coalesces.push(Coalescence::Function(function));
 							continue;
 						}
@@ -41,32 +47,16 @@ fn coalesce(lexer: &mut Lexer, mut last_valued: bool, expect_parenthesis: bool)
 				coalesces.push(Coalescence::Operator(token.map(operator)));
 				last_valued = false;
 			}
-			Token::Terminal(terminal) => match last_valued {
-				false => {
-					coalesces.push(Coalescence::Terminal(token.map(terminal)));
-					last_valued = true;
-				}
-				true => return Err(token.map(Error::ExpectedOperator)),
-			},
-			Token::Variable(variable) => match last_valued {
-				false => {
-					coalesces.push(Coalescence::Variable(Spanned::new(variable, token.span)));
-					last_valued = true;
-				}
-				true => return Err(Spanned::new(Error::ExpectedOperator, token.span)),
-			},
+			Token::Terminal(terminal) => value(&mut coalesces, &mut last_valued,
+				Coalescence::Terminal(token.map(terminal)), span)?,
+			Token::Variable(variable) => value(&mut coalesces, &mut last_valued,
+				Coalescence::Variable(Spanned::new(variable, span)), span)?,
 			Token::Function(function) => match last_valued {
-				false => coalesces.push(Coalescence::Function(Spanned::new(function, token.span))),
-				true => return Err(Spanned::new(Error::ExpectedOperator, token.span)),
+				false => coalesces.push(Coalescence::Function(Spanned::new(function, span))),
+				true => return Err(Spanned::new(Error::ExpectedOperator, span)),
 			},
-			Token::Constant(constant) => match last_valued {
-				false => {
-					let terminal = Spanned::new(constant.value(), token.span);
-					coalesces.push(Coalescence::Terminal(terminal));
-					last_valued = true;
-				}
-				true => return Err(Spanned::new(Error::ExpectedOperator, token.span)),
-			},
+			Token::Constant(constant) => value(&mut coalesces, &mut last_valued,
+				Coalescence::Terminal(Spanned::new(constant.value(), span)), span)?,
 			Token::Coalesce(mut count) => {
 				count += 1;
 				let mut iterator = coalesces.iter().enumerate().rev();
@@ -95,4 +85,22 @@ fn coalesce(lexer: &mut Lexer, mut last_valued: bool, expect_parenthesis: bool)
 		true => Ok(Coalescence::Multiple(coalesces)),
 		false => Err(Spanned::new(Error::ExpectedValued, last_span))
 	}
+}
+
+fn value(coalesces: &mut Vec<Coalescence>, last_valued: &mut bool,
+         value: Coalescence, span: Span) -> Result<(), Spanned<Error>> {
+	if *last_valued {
+		match coalesces.last() {
+			Some(Coalescence::Multiple(_)) => {
+				let byte_start = value.byte_start();
+				let span = Span(byte_start, byte_start + 1);
+				let operator = Spanned::new(Operator::Multiply, span);
+				coalesces.push(Coalescence::Operator(operator));
+			}
+			_ => return Err(Spanned::new(Error::ExpectedOperator, span)),
+		}
+	}
+
+	*last_valued = true;
+	Ok(coalesces.push(value))
 }

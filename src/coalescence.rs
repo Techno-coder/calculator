@@ -44,7 +44,7 @@ impl Coalescence {
 		}
 	}
 
-	fn byte_start(&self) -> usize {
+	pub fn byte_start(&self) -> usize {
 		match self {
 			Coalescence::Multiple(coalesces) => coalesces.first().unwrap().byte_start(),
 			Coalescence::Operator(operator) => operator.span.byte_start(),
